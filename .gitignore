@@ -1,0 +1,12 @@
+# Ignore temporary files.
+*~
+
+# Ignore IDE project files
+.idea
+.idea/*
+
+# Ignore environment specific configuration
+.env
+
+# Ignore config file with tweeter credentials
+.config/tweepy/config.py

@@ -1,0 +1,5 @@
+consumer_key = "94YD2US094I8W7DbgP61SQ"
+consumer_secret = "	kHr0YGrMlcb9s1OmWkyURvRQ2MfUdSrHnAtCb04NDA"
+access_token = "2270579930-TRgSRfv8rBaAz8xlmPezpFZVDJu6rI4dDsWxXN0"
+access_token_secret = "j6hKVBEK5GxevGGMULc1fpZXWWIc4Xhcq2wMaeUW29ju5"
+filter_words = "'#wordpress', '#drupal'"
