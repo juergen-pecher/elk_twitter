@@ -9,4 +9,4 @@
 .env
 
 # Ignore config file with tweeter credentials
-*/config.py
+config/tweepy/config.py
