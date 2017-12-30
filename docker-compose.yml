@@ -1,23 +1,21 @@
-version: '3'
+version: '2'
 
 services:
-  # tweeby
-  tweeby:
+  # tweepy
+  tweepy:
     image: juergenp/tweepy_textblob:latest
+
+    depends_on:
+      - elastic
 
     volumes:
       - ${TWEEPY_CONFIG}:/usr/src/app/config.py
       - ${TWEEPY_SRC}:/usr/src/app/sentiment.py
 
-    command: ["sentiment.py"]
-
 
   # Elasticsearch
   elastic:
     image: docker.elastic.co/elasticsearch/elasticsearch:5.5.1
-
-    depends_on:
-      - tweeby
 
     ports:
       - "${PORT_ELASTIC}:9200"
@@ -45,7 +43,9 @@ services:
 
     depends_on:
       - elastic
+
     volumes:
-      - ${KIBANA_CONFIG}:/usr/share/kibana/config
+      - ${KIBANA_CONFIG}:/usr/share/kibana/config/kibana.yml
+
     ports:
       - ${PORT_KIBANA}:5601
