@@ -56,10 +56,15 @@ class TweetStreamListener(StreamListener):
 
 
         # add text and sentiment info to elasticsearch
-        es.index(index="ektdemo",
+        # see for available values:
+        # https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/tweet-object
+        es.index(index=elastic_index,
                  doc_type="tweet",
                  body={"author": dict_data["user"]["screen_name"],
+                       "author_id": dict_data["user"]["id_str"],
+                       "author_image": dict_data["user"]["profile_image_url_https"],
                        "date": dict_data["created_at"],
+                       "lang": dict_data["lang"],
                        "message": dict_data["text"],
                        "tweet_id": dict_data["id_str"],
                        "tweet_timestamp_ms": dict_data["timestamp_ms"],
@@ -68,13 +73,21 @@ class TweetStreamListener(StreamListener):
                        "in_reply_to_status_id": dict_data["in_reply_to_status_id"],
                        "in_reply_to_screen_name": dict_data["in_reply_to_screen_name"],
                        "favorite_count": dict_data["favorite_count"],
-                       "author": dict_data["user"]["screen_name"],
                        "tweet_text": dict_data["text"],
                        "retweeted": dict_data["retweeted"],
                        "retweet_count": dict_data["retweet_count"],
-                       "geo": dict_data["geo"],
+                       "is_quote_status": dict_data["is_quote_status"],
+                       "quoted_status": dict_data["quoted_status"],
+                       "quote_count": dict_data["quote_count"],
+                       "reply_count": dict_data["reply_count"],
                        "place": dict_data["place"],
                        "coordinates": dict_data["coordinates"],
+                       "hashtags": dict_data["entities"]["hashtags"],
+                       "urls": dict_data["entities"]["urls"],
+                       "user_mentions": dict_data["entities"]["user_mentions"],
+                       "media": dict_data["entities"]["media"],
+                       "symbols": dict_data["entities"]["symbols"],
+                       "polls": dict_data["entities"]["polls"],
                        "polarity": tweet.sentiment.polarity,
                        "subjectivity": tweet.sentiment.subjectivity,
                        "sentiment": sentiment})

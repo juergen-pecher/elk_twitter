@@ -8,6 +8,9 @@ access_token_secret = "add_your_access_token_secret"
 elastic_host = "localhost"
 elastic_port = "9200"
 
+# elasticsearch index
+elastic_index = "ektdemo"
+
 # Filter on keywords, see
 # https://developer.twitter.com/en/docs/tweets/rules-and-filtering/overview/standard-operators
 filter_words = ['keyword01', 'keyword02']
