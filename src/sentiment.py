@@ -2,6 +2,7 @@ import json
 import logging
 import logging.handlers
 import tweepy
+import datetime
 from tweepy.streaming import StreamListener
 from tweepy import OAuthHandler
 from tweepy import Stream
@@ -54,11 +55,14 @@ class TweetStreamListener(StreamListener):
         # uncomment the following line for debugging purposes
         # logger.info(sentiment)
 
+        # date-formated variable for weekly indexes in elasticsearch
+        now = datetime.datetime.now()
+        index_suffix = now.strftime("-%Y-%m-%U")
 
         # add text and sentiment info to elasticsearch
         # see for available values:
         # https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/tweet-object
-        es.index(index=elastic_index,
+        es.index(index=elastic_index + index_suffix,
                  doc_type="tweet",
                  body={"author": dict_data["user"]["screen_name"],
                        "author_id": dict_data["user"]["id_str"],
@@ -77,17 +81,11 @@ class TweetStreamListener(StreamListener):
                        "retweeted": dict_data["retweeted"],
                        "retweet_count": dict_data["retweet_count"],
                        "is_quote_status": dict_data["is_quote_status"],
-                       "quoted_status": dict_data["quoted_status"],
                        "quote_count": dict_data["quote_count"],
                        "reply_count": dict_data["reply_count"],
                        "place": dict_data["place"],
                        "coordinates": dict_data["coordinates"],
-                       "hashtags": dict_data["entities"]["hashtags"],
-                       "urls": dict_data["entities"]["urls"],
-                       "user_mentions": dict_data["entities"]["user_mentions"],
-                       "media": dict_data["entities"]["media"],
-                       "symbols": dict_data["entities"]["symbols"],
-                       "polls": dict_data["entities"]["polls"],
+                       "entities": dict_data["entities"],
                        "polarity": tweet.sentiment.polarity,
                        "subjectivity": tweet.sentiment.subjectivity,
                        "sentiment": sentiment})
