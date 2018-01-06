@@ -24,7 +24,7 @@ es_logger = logging.getLogger('elasticsearch')
 es_logger.setLevel(logging.INFO)
 
 # enable debugging
-tweepy.debug()
+# tweepy.debug()
 
 # create instance of elasticsearch
 es = Elasticsearch(
@@ -45,9 +45,9 @@ class TweetStreamListener(StreamListener):
         tweet = TextBlob(dict_data["text"])
 
         # determine if sentiment is positive, negative, or neutral
-        if tweet.sentiment.polarity < 0:
+        if tweet.sentiment.polarity < -0.25:
             sentiment = "negative"
-        elif tweet.sentiment.polarity == 0:
+        elif  -0.25 <= tweet.sentiment.polarity <= 0.25:
             sentiment = "neutral"
         else:
             sentiment = "positive"
@@ -80,42 +80,80 @@ class TweetStreamListener(StreamListener):
             }
         }
 
-        docindex_body = {"user": dict_data["user"],
-                         "date": dict_data["created_at"],
-                         "date_formated": created,
-                         "lang": dict_data["lang"],
-                         "message": dict_data["text"],
-                         "tweet_id": dict_data["id_str"],
-                         "timestamp": dict_data["timestamp_ms"],
-                         "tweet_date": dict_data["created_at"],
-                         "is_quote_status": dict_data["is_quote_status"],
-                         "in_reply_to_status_id": dict_data["in_reply_to_status_id"],
-                         "in_reply_to_screen_name": dict_data["in_reply_to_screen_name"],
-                         "favorite_count": dict_data["favorite_count"],
-                         "tweet_text": dict_data["text"],
-                         "retweeted": dict_data["retweeted"],
-                         "retweet_count": dict_data["retweet_count"],
-                         "is_quote_status": dict_data["is_quote_status"],
-                         "quote_count": dict_data["quote_count"],
-                         "reply_count": dict_data["reply_count"],
-                         "place": dict_data["place"],
-                         "coordinates": dict_data["coordinates"],
-                         "entities": dict_data["entities"],
-                         "polarity": tweet.sentiment.polarity,
-                         "subjectivity": tweet.sentiment.subjectivity,
-                         "sentiment": sentiment
-                         }
+        if 'retweeted_status' in dict_data:
+            id_origin = dict_data["retweeted_status"]["id_str"]
+            doc_exists = es.exists(index=elastic_index + index_suffix,
+                                   doc_type="tweet",
+                                   id=id_origin,
+                                   )
+            docindex_body = {"user": dict_data["retweeted_status"]["user"],
+                             "tweet_id": dict_data["retweeted_status"]["id_str"],
+                             "favorite_count": dict_data["retweeted_status"]["favorite_count"],
+                             "tweet_text": dict_data["retweeted_status"]["text"],
+                             "retweet_count": dict_data["retweeted_status"]["retweet_count"],
+                             }
+        elif 'quoted_status' in dict_data:
+            id_origin = dict_data["quoted_status"]["id_str"]
+            doc_exists = es.exists(index=elastic_index + index_suffix,
+                                   doc_type="tweet",
+                                   id=id_origin,
+                                   )
+            docindex_body = {"user": dict_data["quoted_status"]["user"],
+                             "tweet_id": dict_data["quoted_status"]["id_str"],
+                             "favorite_count": dict_data["quoted_status"]["favorite_count"],
+                             "tweet_text": dict_data["quoted_status"]["text"],
+                             "quote_count": dict_data["quoted_status"]["quote_count"],
+                             }
+        else:
+            id_origin = dict_data["id_str"]
+            docindex_body = {"user": dict_data["user"],
+                             "date": dict_data["created_at"],
+                             "date_formated": created,
+                             "lang": dict_data["lang"],
+                             "tweet_id": dict_data["id_str"],
+                             "timestamp": dict_data["timestamp_ms"],
+                             "tweet_date": dict_data["created_at"],
+                             "is_quote_status": dict_data["is_quote_status"],
+                             "in_reply_to_status_id": dict_data["in_reply_to_status_id"],
+                             "in_reply_to_screen_name": dict_data["in_reply_to_screen_name"],
+                             "favorite_count": dict_data["favorite_count"],
+                             "tweet_text": dict_data["text"],
+                             "retweeted": dict_data["retweeted"],
+                             "retweet_count": dict_data["retweet_count"],
+                             "is_quote_status": dict_data["is_quote_status"],
+                             "quote_count": dict_data["quote_count"],
+                             "reply_count": dict_data["reply_count"],
+                             "place": dict_data["place"],
+                             "coordinates": dict_data["coordinates"],
+                             "entities": dict_data["entities"],
+                             "polarity": tweet.sentiment.polarity,
+                             "subjectivity": tweet.sentiment.subjectivity,
+                             "sentiment": sentiment
+                             }
 
         # add text and sentiment info to elasticsearch
         # see for available values:
         # https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/tweet-object
 
         if es.indices.exists(elastic_index + index_suffix):
-            es.index(index=elastic_index + index_suffix,
+            if 'retweeted_status' in dict_data and doc_exists == True:
+                es.update(index=elastic_index + index_suffix,
+                          doc_type="tweet",
+                          id=id_origin,
+                          body={"doc":docindex_body}
+                          )
+            elif 'quoted_status' in dict_data and doc_exists == True:
+                 es.update(index=elastic_index + index_suffix,
                            doc_type="tweet",
-                           id=dict_data["id_str"],
-                           body=docindex_body
+                           id=id_origin,
+                           body={"doc":docindex_body}
                            )
+            else:
+                es.index(index=elastic_index + index_suffix,
+                         doc_type="tweet",
+                         id=id_origin,
+                         body=docindex_body
+                       )
 
         else:
             es.indices.create(index=elastic_index + index_suffix,
