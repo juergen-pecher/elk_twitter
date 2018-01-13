@@ -64,10 +64,17 @@ class TweetStreamListener(StreamListener):
         created_temp = datetime.datetime.utcfromtimestamp(float(dict_data["timestamp_ms"]) / 1e3)
         created = created_temp.strftime("%Y/%m/%d %H:%M:%S")
 
+        # define the coordinates values
+        if dict_data["coordinates"] is not None:
+            coordinates = dict_data["coordinates"]["coordinates"]
+        else:
+            coordinates = None
+
         # index settings and mappings
+        # default shards: 5, default replicas: 1
         createindex_body = {
             'settings': {
-                'number_of_shards': 5,
+                'number_of_shards': 2,
                 'number_of_replicas': 1
             },
             'mappings': {
@@ -75,6 +82,7 @@ class TweetStreamListener(StreamListener):
                     'date_detection': True,
                     'properties': {
                         'date_formated': { 'type': 'date', 'format': 'yyyy/MM/dd HH:mm:ss' },
+                        'coordinates': { 'type': 'geo_point' },
                     }
                 }
             }
@@ -124,7 +132,7 @@ class TweetStreamListener(StreamListener):
                              "quote_count": dict_data["quote_count"],
                              "reply_count": dict_data["reply_count"],
                              "place": dict_data["place"],
-                             "coordinates": dict_data["coordinates"],
+                             "coordinates": coordinates,
                              "entities": dict_data["entities"],
                              "polarity": tweet.sentiment.polarity,
                              "subjectivity": tweet.sentiment.subjectivity,
